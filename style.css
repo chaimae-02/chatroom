@@ -158,10 +158,14 @@ button:active {
   display: flex;
   gap: 10px;
   margin-top: 10px;
-  overflow-x: auto;
+  overflow-x: auto;      /* scroll horizontally */
+  overflow-y: hidden;    /* prevent vertical scroll */
   padding-bottom: 5px;
+  max-width: 100%;       /* fit the container width */
+  white-space: nowrap;   /* keep all stickers in a row */
 }
 
+/* Keep sticker size exactly the same */
 .sticker {
   width: 50px;
   height: 50px;
@@ -171,9 +175,10 @@ button:active {
 }
 
 .sticker:hover {
-  transform: scale(1.2);
+  transform: scale(1.2); /* optional hover effect, does not enlarge permanently */
 }
 
+/* Sticker shown in chat */
 .chat-sticker {
   width: 80px;
   height: 80px;
