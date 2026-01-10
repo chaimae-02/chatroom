@@ -1,3 +1,17 @@
+const stickers = document.querySelectorAll(".sticker");
+
+stickers.forEach(sticker => {
+  sticker.addEventListener("click", () => {
+    messages.push({
+      user: user,
+      avatar: avatar,
+      sticker: sticker.src,   // store sticker URL
+      text: null              // no text
+    });
+    renderMessages();
+  });
+});
+
 const messagesDiv = document.getElementById("messages");
 const messageInput = document.getElementById("messageInput");
 const sendBtn = document.getElementById("sendBtn");
@@ -18,19 +32,32 @@ function renderMessages() {
     const div = document.createElement("div");
     div.classList.add("message");
 
-    div.innerHTML = `
-      <img src="${msg.avatar}" class="msg-avatar" />
-      <div class="msg-content">
-        <span>${msg.user}</span>
-        <p>${msg.text}</p>
-      </div>
-    `;
+    if (msg.sticker) {
+      // sticker message
+      div.innerHTML = `
+        <img src="${msg.avatar}" class="msg-avatar" />
+        <div class="msg-content">
+          <span>${msg.user}</span>
+          <img src="${msg.sticker}" class="chat-sticker" />
+        </div>
+      `;
+    } else {
+      // normal text message
+      div.innerHTML = `
+        <img src="${msg.avatar}" class="msg-avatar" />
+        <div class="msg-content">
+          <span>${msg.user}</span>
+          <p>${msg.text}</p>
+        </div>
+      `;
+    }
 
     messagesDiv.appendChild(div);
   });
 
   messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
+
 
 sendBtn.addEventListener("click", sendMessage);
 messageInput.addEventListener("keypress", (e) => {
