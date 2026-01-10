@@ -162,7 +162,8 @@ button:active {
   overflow-y: hidden;    /* prevent vertical scroll */
   padding-bottom: 5px;
   max-width: 100%;       /* fit the container width */
-  white-space: nowrap;   /* keep all stickers in a row */
+  white-space: nowrap;  
+  flex-shrink: 0; /* prevent stickers from shrinking */ /* keep all stickers in a row */
 }
 
 /* Keep sticker size exactly the same */
