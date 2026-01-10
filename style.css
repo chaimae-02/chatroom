@@ -154,6 +154,10 @@ button:active {
   align-items: flex-start;
   gap: 8px;
 }
+/* Increase message text size */
+.message p {
+  font-size: 16px; /* bigger than before */
+}
 .sticker-panel {
   display: flex;
   gap: 10px;
@@ -181,8 +185,26 @@ button:active {
 
 /* Sticker shown in chat */
 .chat-sticker {
-  width: 80px;
-  height: 80px;
+  width: 100px;
+  height: 100px;
   margin-top: 5px;
   border-radius: 12px;
+}
+.emoji-panel {
+  display: flex;
+  gap: 8px;
+  margin: 8px 0;
+  overflow-x: auto;
+  white-space: nowrap;
+  padding-bottom: 5px;
+}
+
+.emoji {
+  font-size: 24px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.emoji:hover {
+  transform: scale(1.3);
 }

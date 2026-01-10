@@ -12,6 +12,23 @@ stickers.forEach(sticker => {
   });
 });
 
+
+
+
+const emojiToggle = document.getElementById("emojiToggle");
+const emojiPanel = document.querySelector(".emoji-panel");
+
+emojiToggle.addEventListener("click", () => {
+  if (emojiPanel.style.display === "none") {
+    emojiPanel.style.display = "flex";
+  } else {
+    emojiPanel.style.display = "none";
+  }
+});
+
+
+
+
 const messagesDiv = document.getElementById("messages");
 const messageInput = document.getElementById("messageInput");
 const sendBtn = document.getElementById("sendBtn");
@@ -77,3 +94,13 @@ function sendMessage() {
   messageInput.value = "";
   renderMessages();
 }
+// select all emoji spans
+const emojiElements = document.querySelectorAll(".emoji");
+
+// when clicked, add emoji to input
+emojiElements.forEach(emoji => {
+  emoji.addEventListener("click", () => {
+    messageInput.value += emoji.textContent; // insert emoji at cursor end
+    messageInput.focus(); // keep typing in input
+  });
+});
