@@ -15,12 +15,12 @@ body {
 
 
 .chat-container {
-  background: rgba(255, 240, 246, 0.92);
+ /*background: rgba(255, 240, 246, 0.92); */
   backdrop-filter: blur(6px);
 
   width: 360px;          /* SAME width */
-  min-height: 420px;     /* TALLER */
-  max-height: 650px;     /* TALLER */
+  min-height: 200px;     /* TALLER */
+  max-height: 700px;     /* TALLER */
 
   padding: 22px;
   border-radius: 22px;
@@ -46,9 +46,9 @@ h2 {
 
 .messages {
   flex: 1;
-  background: #ffe6f0;
+  background: #f8ebf0;
   border-radius: 15px;
-  padding: 12px;
+  padding: 9px;
   overflow-y: auto;
   margin-bottom: 10px;              /* fills vertical space */
   min-height: 300px;     /* taller chat area */
