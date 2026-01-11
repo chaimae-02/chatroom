@@ -88,7 +88,21 @@ pc.onicecandidate = (event) => {
 
 iceRef.on("child_added", snapshot => {
   const candidate = JSON.parse(snapshot.val());
-  pc.addIceCandidate(new RTCIceCandidate(candidate));
+
+  // Check if remoteDescription exists
+  if (pc.remoteDescription) {
+    pc.addIceCandidate(new RTCIceCandidate(candidate))
+      .catch(e => console.error("ICE candidate error:", e));
+  } else {
+    // Wait until remoteDescription is set
+    const wait = setInterval(() => {
+      if (pc.remoteDescription) {
+        pc.addIceCandidate(new RTCIceCandidate(candidate))
+          .catch(e => console.error("ICE candidate error:", e));
+        clearInterval(wait); // stop waiting
+      }
+    }, 100); // check every 100ms
+  }
 });
 
 // ---------------------
