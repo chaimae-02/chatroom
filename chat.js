@@ -73,6 +73,8 @@ pc.ondatachannel = (event) => {
 
 // Firebase refs
 const roomRef = database.ref("rooms/" + roomCode);
+const typingRef = roomRef.child("typing");
+
 const offerRef = roomRef.child("offer");
 const answerRef = roomRef.child("answer");
 const iceRef = roomRef.child("iceCandidates");
@@ -266,6 +268,22 @@ function sendMessage() {
 }
 
 
+let typingTimeout;
+
+messageInput.addEventListener("input", () => {
+  typingRef.set({
+    user: user,
+    typing: true
+  });
+
+  clearTimeout(typingTimeout);
+  typingTimeout = setTimeout(() => {
+    typingRef.set({
+      user: user,
+      typing: false
+    });
+  }, 1200);
+});
 
 
 // select all emoji spans
@@ -288,5 +306,22 @@ document.addEventListener("click", (e) => {
   ) {
     clickSound.currentTime = 0;
     clickSound.play();
+  }
+});
+
+const typingIndicator = document.getElementById("typingIndicator");
+
+typingRef.on("value", snapshot => {
+  if (!snapshot.exists()) {
+    typingIndicator.textContent = "";
+    return;
+  }
+
+  const data = snapshot.val();
+
+  if (data.typing && data.user !== user) {
+    typingIndicator.textContent = `${data.user} is typing…`;
+  } else {
+    typingIndicator.textContent = "";
   }
 });
