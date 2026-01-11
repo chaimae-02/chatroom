@@ -110,65 +110,76 @@ iceRef.on("child_added", snapshot => {
 // ---------------------
 let iceQueue = [];
 
-// Function to safely add ICE candidates after remote description
+// Safely add ICE candidates
 function safeAddIce(candidate) {
   if (pc.remoteDescription) {
-    pc.addIceCandidate(new RTCIceCandidate(candidate))
-      .catch(e => console.error("ICE candidate error:", e));
+    pc.addIceCandidate(new RTCIceCandidate(candidate)).catch(console.error);
   } else {
-    iceQueue.push(candidate); // queue it
+    iceQueue.push(candidate);
   }
 }
 
-// Listen for incoming ICE
+// Listen for ICE candidates
 iceRef.on("child_added", snapshot => {
   const candidate = JSON.parse(snapshot.val());
   safeAddIce(candidate);
 });
 
-// Host
+// Host setup
 if (role === "host") {
+  // Create offer
   pc.createOffer()
     .then(offer => pc.setLocalDescription(offer))
-    .then(() => {
-      offerRef.set(JSON.stringify(pc.localDescription));
-    })
+    .then(() => offerRef.set(JSON.stringify(pc.localDescription)))
     .catch(console.error);
 
+  // Listen for answer
   answerRef.on("value", snapshot => {
     if (!snapshot.exists()) return;
     const answer = JSON.parse(snapshot.val());
 
-    // Set remote description safely
     pc.setRemoteDescription(answer)
       .then(() => {
-        // Add queued ICE candidates
+        // Add any queued ICE candidates
         iceQueue.forEach(c => pc.addIceCandidate(new RTCIceCandidate(c)));
         iceQueue = [];
+        console.log("✅ Host remoteDescription set, ICE applied");
       })
       .catch(console.error);
   });
 }
 
-// Guest
+// Guest setup
 if (role === "guest") {
   offerRef.on("value", snapshot => {
     if (!snapshot.exists()) return;
     const offer = JSON.parse(snapshot.val());
 
-    // Set remote description first
     pc.setRemoteDescription(offer)
       .then(() => pc.createAnswer())
       .then(answer => pc.setLocalDescription(answer))
+      .then(() => answerRef.set(JSON.stringify(pc.localDescription)))
       .then(() => {
-        answerRef.set(JSON.stringify(pc.localDescription));
-        // Add queued ICE candidates
+        // Add any queued ICE candidates
         iceQueue.forEach(c => pc.addIceCandidate(new RTCIceCandidate(c)));
         iceQueue = [];
+        console.log("✅ Guest remoteDescription set, ICE applied");
       })
       .catch(console.error);
   });
 }
+
+// Debugging connection states
+pc.onconnectionstatechange = () => console.log("Connection state:", pc.connectionState);
+pc.oniceconnectionstatechange = () => console.log("ICE state:", pc.iceConnectionState);
+
+// Log DataChannel state changes
+if (dataChannel) {
+  dataChannel.onopen = () => console.log("✅ DataChannel opened");
+  dataChannel.onclose = () => console.log("❌ DataChannel closed");
+  dataChannel.onerror = e => console.error("DataChannel error:", e);
+}
+
 
 
 
