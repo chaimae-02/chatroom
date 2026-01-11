@@ -106,33 +106,70 @@ iceRef.on("child_added", snapshot => {
 });
 
 // ---------------------
-// 4️⃣ Host / Guest signaling
+// 4️⃣ Host / Guest signaling FIXED
 // ---------------------
+let iceQueue = [];
+
+// Function to safely add ICE candidates after remote description
+function safeAddIce(candidate) {
+  if (pc.remoteDescription) {
+    pc.addIceCandidate(new RTCIceCandidate(candidate))
+      .catch(e => console.error("ICE candidate error:", e));
+  } else {
+    iceQueue.push(candidate); // queue it
+  }
+}
+
+// Listen for incoming ICE
+iceRef.on("child_added", snapshot => {
+  const candidate = JSON.parse(snapshot.val());
+  safeAddIce(candidate);
+});
+
+// Host
 if (role === "host") {
-  pc.createOffer().then(offer => {
-    pc.setLocalDescription(offer);
-    offerRef.set(JSON.stringify(offer));
-  });
+  pc.createOffer()
+    .then(offer => pc.setLocalDescription(offer))
+    .then(() => {
+      offerRef.set(JSON.stringify(pc.localDescription));
+    })
+    .catch(console.error);
 
   answerRef.on("value", snapshot => {
     if (!snapshot.exists()) return;
     const answer = JSON.parse(snapshot.val());
-    pc.setRemoteDescription(answer);
+
+    // Set remote description safely
+    pc.setRemoteDescription(answer)
+      .then(() => {
+        // Add queued ICE candidates
+        iceQueue.forEach(c => pc.addIceCandidate(new RTCIceCandidate(c)));
+        iceQueue = [];
+      })
+      .catch(console.error);
   });
 }
 
+// Guest
 if (role === "guest") {
   offerRef.on("value", snapshot => {
     if (!snapshot.exists()) return;
     const offer = JSON.parse(snapshot.val());
-    pc.setRemoteDescription(offer);
 
-    pc.createAnswer().then(answer => {
-      pc.setLocalDescription(answer);
-      answerRef.set(JSON.stringify(answer));
-    });
+    // Set remote description first
+    pc.setRemoteDescription(offer)
+      .then(() => pc.createAnswer())
+      .then(answer => pc.setLocalDescription(answer))
+      .then(() => {
+        answerRef.set(JSON.stringify(pc.localDescription));
+        // Add queued ICE candidates
+        iceQueue.forEach(c => pc.addIceCandidate(new RTCIceCandidate(c)));
+        iceQueue = [];
+      })
+      .catch(console.error);
   });
 }
+
 
 
 
