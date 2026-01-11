@@ -31,12 +31,17 @@ button:hover,
 
 }
 
+.room-container{
+    
+    padding: 2px;
+   
+}
 .chat-container {
  /*background: rgba(255, 240, 246, 0.92); */
   backdrop-filter: blur(6px);
 
-  width: 360px;          /* SAME width */
-  min-height: 200px;     /* TALLER */
+  width: 400px;          /* SAME width */
+  min-height: 400px;     /* TALLER */
   max-height: 700px;     /* TALLER */
 
   padding: 22px;
@@ -48,17 +53,18 @@ button:hover,
   flex-direction: column;
 }
 .chat-container input {
-  margin-bottom: 15px;
+  margin-bottom: 5px;
 }
 
 .avatar-grid {
   margin-bottom: 25px;
+
 }
 
 h2 {
   text-align: center;
   color: #d63384;
-  margin-bottom: 9px;
+  margin-bottom: 19px;
 }
 
 .messages {
@@ -99,6 +105,9 @@ input {
   border: 2px solid #ffd6e8;
   outline: none;
   font-size: 14px;
+   display: flex;
+  gap: 8px;
+  
 }
 
 input:focus {
@@ -110,7 +119,7 @@ button {
   color: white;
   border: none;
   border-radius: 14px;
-  padding: 10px 16px;
+  padding: 10px 20px;
   font-size: 14px;
   cursor: pointer;
   font-weight: 600;
@@ -118,6 +127,10 @@ button {
   box-shadow: 0 6px 12px rgba(255, 79, 154, 0.3);
 }
 
+
+button#sendBtn {
+    padding: 10px 13px;
+}
 button:hover {
   transform: translateY(-1px);
   box-shadow: 0 8px 16px rgba(255, 79, 154, 0.4);

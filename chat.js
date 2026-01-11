@@ -35,6 +35,42 @@ const pc = new RTCPeerConnection({
   ]
 });
 
+// ---------------------
+// 5️⃣ DataChannel
+// ---------------------
+let dataChannel;
+
+if (role === "host") {
+  dataChannel = pc.createDataChannel("chat");
+
+  dataChannel.onopen = () => {
+    console.log("✅ DataChannel open (host)");
+  };
+
+  dataChannel.onmessage = (event) => {
+    const msg = JSON.parse(event.data);
+    messages.push(msg);
+    renderMessages();
+  };
+}
+
+// Guest receives channel
+pc.ondatachannel = (event) => {
+  dataChannel = event.channel;
+
+  dataChannel.onopen = () => {
+    console.log("✅ DataChannel open (guest)");
+  };
+
+  dataChannel.onmessage = (event) => {
+    const msg = JSON.parse(event.data);
+    messages.push(msg);
+    renderMessages();
+  };
+};
+
+
+
 // Firebase refs
 const roomRef = database.ref("rooms/" + roomCode);
 const offerRef = roomRef.child("offer");
@@ -98,15 +134,21 @@ const stickers = document.querySelectorAll(".sticker");
 
 stickers.forEach(sticker => {
   sticker.addEventListener("click", () => {
-    messages.push({
-      user: user,
-      avatar: avatar,
-      sticker: sticker.src,   // store sticker URL
-      text: null              // no text
-    });
+    if (!dataChannel || dataChannel.readyState !== "open") return;
+
+    const msg = {
+      user,
+      avatar,
+      sticker: sticker.src,
+      text: null
+    };
+
+    dataChannel.send(JSON.stringify(msg));
+    messages.push(msg);
     renderMessages();
   });
 });
+
 
 
 
@@ -208,17 +250,24 @@ messageInput.addEventListener("keypress", (e) => {
 
 function sendMessage() {
   const text = messageInput.value.trim();
-  if (!text) return;
+  if (!text || !dataChannel || dataChannel.readyState !== "open") return;
 
-  messages.push({
-    user: user,
-    avatar: avatar,
-    text: text
-  });
+  const msg = {
+    user,
+    avatar,
+    text
+  };
+
+  dataChannel.send(JSON.stringify(msg)); // 🚀 send P2P
+  messages.push(msg);                     // show locally
+  renderMessages();
 
   messageInput.value = "";
-  renderMessages();
 }
+
+
+
+
 // select all emoji spans
 const emojiElements = document.querySelectorAll(".emoji");
 
