@@ -1,3 +1,34 @@
+const firebaseConfig = {
+  
+  apiKey: "AIzaSyCR-_JqYh8tsbr_cL_pRX9tUmaEm0XSvFA",
+  authDomain: "nana-chat-81913.firebaseapp.com",
+  databaseURL: "https://nana-chat-81913-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "nana-chat-81913",
+  storageBucket: "nana-chat-81913.firebasestorage.app",
+  messagingSenderId: "334244418564",
+  appId: "1:334244418564:web:1903fd25bc186d16ab1151"
+
+};
+
+firebase.initializeApp(firebaseConfig);
+const database = firebase.database();
+
+
+const pc = new RTCPeerConnection({
+  iceServers: [
+    { urls: "stun:stun.l.google.com:19302" }
+  ]
+});
+
+
+const roomRef = database.ref("rooms/" + roomCode);
+const offerRef = roomRef.child("offer");
+const answerRef = roomRef.child("answer");
+const iceRef = roomRef.child("iceCandidates");
+
+
+
+
 const user = localStorage.getItem("chatUser");
 const avatar = localStorage.getItem("chatAvatar");
 const roomCode = localStorage.getItem("roomCode");
@@ -146,6 +177,54 @@ emojiElements.forEach(emoji => {
     messageInput.focus(); // keep typing in input
   });
 });
+
+
+
+    pc.onicecandidate = (event) => {
+  if (event.candidate) {
+    iceRef.push(JSON.stringify(event.candidate));
+  }
+};
+
+ 
+
+if (role === "host") {
+  pc.createOffer().then(offer => {
+    pc.setLocalDescription(offer);
+    offerRef.set(JSON.stringify(offer));
+  });
+
+  answerRef.on("value", snapshot => {
+    if (snapshot.exists()) {
+      const answer = JSON.parse(snapshot.val());
+      pc.setRemoteDescription(answer);
+    }
+  });
+}
+  
+if (role === "guest") {
+  offerRef.on("value", snapshot => {
+    if (!snapshot.exists()) return;
+
+    const offer = JSON.parse(snapshot.val());
+    pc.setRemoteDescription(offer);
+
+    pc.createAnswer().then(answer => {
+      pc.setLocalDescription(answer);
+      answerRef.set(JSON.stringify(answer));
+    });
+  });
+}
+
+
+iceRef.on("child_added", snapshot => {
+  const candidate = JSON.parse(snapshot.val());
+  pc.addIceCandidate(new RTCIceCandidate(candidate));
+});
+
+
+
+
 
 document.addEventListener("click", (e) => {
   if (
