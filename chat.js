@@ -15,6 +15,33 @@ stickers.forEach(sticker => {
 
 
 
+
+const music = document.getElementById("bgMusic");
+const musicBtn = document.getElementById("musicBtn");
+
+let isPlaying = false;
+
+musicBtn.addEventListener("click", () => {
+  if (!isPlaying) {
+    music.play();
+    musicBtn.textContent = "⏸ Pause";
+  } else {
+    music.pause();
+    musicBtn.textContent = "🎵 Play";
+  }
+  isPlaying = !isPlaying;
+});
+
+
+const clickSound = new Audio();
+clickSound.src = "click.mp3";
+clickSound.preload = "auto";
+clickSound.volume = 0.4;
+
+
+
+
+
 const emojiToggle = document.getElementById("emojiToggle");
 const emojiPanel = document.querySelector(".emoji-panel");
 
@@ -103,4 +130,16 @@ emojiElements.forEach(emoji => {
     messageInput.value += emoji.textContent; // insert emoji at cursor end
     messageInput.focus(); // keep typing in input
   });
+});
+
+document.addEventListener("click", (e) => {
+  if (
+    e.target.matches("button") ||
+    e.target.matches(".emoji") ||
+    e.target.matches(".sticker") ||
+    e.target.matches(".avatar")
+  ) {
+    clickSound.currentTime = 0;
+    clickSound.play();
+  }
 });

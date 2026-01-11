@@ -11,8 +11,25 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-}
 
+cursor: url("cursor.png") 16 16, auto;}
+
+ button,
+.sticker,
+.emoji,
+.avatar,
+input {
+  cursor: url("hover.png") 16 16, pointer;
+}
+ 
+button:hover,
+.sticker:hover,
+.emoji:hover,
+.avatar:hover {
+  transform: scale(1.05);
+    cursor: url("hover.png") 16 16, pointer;
+
+}
 
 .chat-container {
  /*background: rgba(255, 240, 246, 0.92); */
@@ -31,7 +48,7 @@ body {
   flex-direction: column;
 }
 .chat-container input {
-  margin-bottom: 12px;
+  margin-bottom: 15px;
 }
 
 .avatar-grid {
@@ -41,7 +58,7 @@ body {
 h2 {
   text-align: center;
   color: #d63384;
-  margin-bottom: 15px;
+  margin-bottom: 9px;
 }
 
 .messages {
@@ -197,6 +214,8 @@ button:active {
   overflow-x: auto;
   white-space: nowrap;
   padding-bottom: 5px;
+    flex-shrink: 0; /* prevent stickers from shrinking */ /* keep all stickers in a row */
+
 }
 
 .emoji {
@@ -207,4 +226,15 @@ button:active {
 
 .emoji:hover {
   transform: scale(1.3);
+}
+.music-player {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+
+.music-player button {
+  background: linear-gradient(135deg, #ffb3d9, #ff69b4);
+  font-size: 14px;
+  padding: 7px 15px;
 }
