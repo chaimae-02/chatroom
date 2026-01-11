@@ -1,3 +1,16 @@
+const user = localStorage.getItem("chatUser");
+const avatar = localStorage.getItem("chatAvatar");
+const roomCode = localStorage.getItem("roomCode");
+const role = localStorage.getItem("role");
+
+if (!user || !avatar || !roomCode || !role) {
+  window.location.href = "login.html";
+}
+
+
+
+
+
 const stickers = document.querySelectorAll(".sticker");
 
 stickers.forEach(sticker => {
@@ -57,15 +70,17 @@ emojiToggle.addEventListener("click", () => {
 
 
 const messagesDiv = document.getElementById("messages");
+
+const roomInfo = document.getElementById("roomInfo");
+if (roomInfo) {
+  roomInfo.textContent = `Room: ${roomCode} • You are ${role}`;
+}
+
+
 const messageInput = document.getElementById("messageInput");
 const sendBtn = document.getElementById("sendBtn");
 
-const user = localStorage.getItem("chatUser");
-const avatar = localStorage.getItem("chatAvatar");
 
-if (!user || !avatar) {
-  window.location.href = "login.html";
-}
 
 let messages = [];
 
