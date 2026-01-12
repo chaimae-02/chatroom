@@ -167,6 +167,8 @@ function sendMessage() {
 
   // 🔥 SEND TO FIREBASE
   messagesRef.push(msg);
+for (let i = 0; i < 30; i++) spawnConfetti(); // 20 strawberries per send
+
 
   messageInput.value = "";
 }
@@ -233,3 +235,30 @@ document.addEventListener("click", (e) => {
     clickSound.play();
   }
 });
+
+
+function spawnConfetti() {
+  const container = document.getElementById("confetti-container");
+  const confetti = document.createElement("div");
+
+  // Style the confetti piece (you can use an emoji 🍓 or a colored dot)
+  confetti.textContent = "🍓"; // strawberry emoji
+  confetti.style.position = "absolute";
+  confetti.style.left = Math.random() * window.innerWidth + "px";
+  confetti.style.top = "-50px"; // start above the screen
+  confetti.style.fontSize = (20 + Math.random() * 20) + "px";
+  confetti.style.opacity = 1;
+  confetti.style.transition = "transform 1.5s linear, opacity 1.5s linear";
+confetti.style.transition = `${1 + Math.random()}s linear`;
+
+  container.appendChild(confetti);
+
+  // Animate falling
+  requestAnimationFrame(() => {
+    confetti.style.transform = `translateY(${window.innerHeight + 50}px) rotate(${Math.random() * 360}deg)`;
+    confetti.style.opacity = 0;
+  });
+
+  // Remove after animation
+  setTimeout(() => container.removeChild(confetti), 1500);
+}
