@@ -26,202 +26,38 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const database = firebase.database();
 
-// ---------------------
-// 3️⃣ Create WebRTC connection
-// ---------------------
-const pc = new RTCPeerConnection({
-  iceServers: [
-    { urls: "stun:stun.l.google.com:19302" },
-    { 
-      urls: "turn:turn.anyfirewall.com:443?transport=tcp", 
-      username: "webrtc", 
-      credential: "webrtc" 
-    }
-  ]
-});
-
-
-// ---------------------
-// 5️⃣ DataChannel
-// ---------------------
-let dataChannel;
-
-if (role === "host") {
-  dataChannel = pc.createDataChannel("chat");
-
-  dataChannel.onopen = () => {
-    console.log("✅ DataChannel open (host)");
-  };
-
-  dataChannel.onmessage = (event) => {
-    const msg = JSON.parse(event.data);
-    messages.push(msg);
-    renderMessages();
-  };
-}
-
-// Guest receives channel
-pc.ondatachannel = (event) => {
-  dataChannel = event.channel;
-
-  dataChannel.onopen = () => {
-    console.log("✅ DataChannel open (guest)");
-  };
-
-  dataChannel.onmessage = (event) => {
-    const msg = JSON.parse(event.data);
-    messages.push(msg);
-    renderMessages();
-  };
-};
-
-
-
 // Firebase refs
 const roomRef = database.ref("rooms/" + roomCode);
+const messagesRef = roomRef.child("messages");
 const typingRef = roomRef.child("typing");
 
-const offerRef = roomRef.child("offer");
-const answerRef = roomRef.child("answer");
-const iceRef = roomRef.child("iceCandidates");
 
-// ICE candidate exchange
-pc.onicecandidate = (event) => {
-  if (event.candidate) {
-    iceRef.push(JSON.stringify(event.candidate));
-  }
-};
-
-iceRef.on("child_added", snapshot => {
-  const candidate = JSON.parse(snapshot.val());
-
-  // Check if remoteDescription exists
-  if (pc.remoteDescription) {
-    pc.addIceCandidate(new RTCIceCandidate(candidate))
-      .catch(e => console.error("ICE candidate error:", e));
-  } else {
-    // Wait until remoteDescription is set
-    const wait = setInterval(() => {
-      if (pc.remoteDescription) {
-        pc.addIceCandidate(new RTCIceCandidate(candidate))
-          .catch(e => console.error("ICE candidate error:", e));
-        clearInterval(wait); // stop waiting
-      }
-    }, 100); // check every 100ms
-  }
+messagesRef.limitToLast(100).on("child_added", snapshot => {
+  const msg = snapshot.val();
+  // optional: avoid duplicates
+  if (messages.some(m => m.timestamp === msg.timestamp)) return;
+  messages.push(msg);
+  renderMessages();
 });
 
-// ---------------------
-// 4️⃣ Host / Guest signaling FIXED
-// ---------------------
-let iceQueue = [];
-
-// Safely add ICE candidates
-function safeAddIce(candidate) {
-  if (pc.remoteDescription) {
-    pc.addIceCandidate(new RTCIceCandidate(candidate)).catch(console.error);
-  } else {
-    iceQueue.push(candidate);
-  }
-}
-
-// Listen for ICE candidates
-iceRef.on("child_added", snapshot => {
-  const candidate = JSON.parse(snapshot.val());
-  safeAddIce(candidate);
-});
-
-// Host setup
-if (role === "host") {
-  // Create offer
-  pc.createOffer()
-    .then(offer => pc.setLocalDescription(offer))
-    .then(() => offerRef.set(JSON.stringify(pc.localDescription)))
-    .catch(console.error);
-
-  // Listen for answer
-  answerRef.on("value", snapshot => {
-    if (!snapshot.exists()) return;
-    const answer = JSON.parse(snapshot.val());
-
-    pc.setRemoteDescription(answer)
-      .then(() => {
-        // Add any queued ICE candidates
-        iceQueue.forEach(c => pc.addIceCandidate(new RTCIceCandidate(c)));
-        iceQueue = [];
-        console.log("✅ Host remoteDescription set, ICE applied");
-      })
-      .catch(console.error);
-  });
-}
-
-// Guest setup
-if (role === "guest") {
-  offerRef.on("value", snapshot => {
-    if (!snapshot.exists()) return;
-    const offer = JSON.parse(snapshot.val());
-
-    pc.setRemoteDescription(offer)
-      .then(() => pc.createAnswer())
-      .then(answer => pc.setLocalDescription(answer))
-      .then(() => answerRef.set(JSON.stringify(pc.localDescription)))
-      .then(() => {
-        // Add any queued ICE candidates
-        iceQueue.forEach(c => pc.addIceCandidate(new RTCIceCandidate(c)));
-        iceQueue = [];
-        console.log("✅ Guest remoteDescription set, ICE applied");
-      })
-      .catch(console.error);
-  });
-}
-
-// Debugging connection states
-pc.onconnectionstatechange = () => console.log("Connection state:", pc.connectionState);
-pc.oniceconnectionstatechange = () => console.log("ICE state:", pc.iceConnectionState);
-
-// Log DataChannel state changes
-if (dataChannel) {
-  dataChannel.onopen = () => console.log("✅ DataChannel opened");
-  dataChannel.onclose = () => console.log("❌ DataChannel closed");
-  dataChannel.onerror = e => console.error("DataChannel error:", e);
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+///////////
 
 const stickers = document.querySelectorAll(".sticker");
 
 stickers.forEach(sticker => {
   sticker.addEventListener("click", () => {
-    if (!dataChannel || dataChannel.readyState !== "open") return;
-
     const msg = {
       user,
       avatar,
       sticker: sticker.src,
-      text: null
+      text: null,
+      timestamp: Date.now()
     };
 
-    dataChannel.send(JSON.stringify(msg));
-    messages.push(msg);
-    renderMessages();
+    // 🔥 SEND STICKER THROUGH FIREBASE
+    messagesRef.push(msg);
   });
 });
-
-
-
-
 
 
 const music = document.getElementById("bgMusic");
@@ -320,17 +156,17 @@ messageInput.addEventListener("keypress", (e) => {
 
 function sendMessage() {
   const text = messageInput.value.trim();
-  if (!text || !dataChannel || dataChannel.readyState !== "open") return;
+  if (!text) return;
 
   const msg = {
     user,
     avatar,
-    text
+    text,
+    timestamp: Date.now()
   };
 
-  dataChannel.send(JSON.stringify(msg)); // 🚀 send P2P
-  messages.push(msg);                     // show locally
-  renderMessages();
+  // 🔥 SEND TO FIREBASE
+  messagesRef.push(msg);
 
   messageInput.value = "";
 }
@@ -339,20 +175,41 @@ function sendMessage() {
 let typingTimeout;
 
 messageInput.addEventListener("input", () => {
+  // Notify Firebase that this user is typing
   typingRef.set({
     user: user,
     typing: true
   });
 
+  // Reset timeout
   clearTimeout(typingTimeout);
   typingTimeout = setTimeout(() => {
     typingRef.set({
       user: user,
       typing: false
     });
-  }, 1200);
+  }, 1200); // 1.2 seconds after user stops typing
 });
 
+const typingIndicator = document.getElementById("typingIndicator");
+
+typingRef.on("value", snapshot => {
+  if (!snapshot.exists()) {
+    typingIndicator.textContent = "";
+    return;
+  }
+
+  const data = snapshot.val();
+
+  // Only show if someone else is typing
+  if (data.typing && data.user !== user) {
+    typingIndicator.textContent = `${data.user} is typing…`;
+  } else {
+    typingIndicator.textContent = "";
+  }
+});
+
+//////////////////////////////////
 
 // select all emoji spans
 const emojiElements = document.querySelectorAll(".emoji");
@@ -374,22 +231,5 @@ document.addEventListener("click", (e) => {
   ) {
     clickSound.currentTime = 0;
     clickSound.play();
-  }
-});
-
-const typingIndicator = document.getElementById("typingIndicator");
-
-typingRef.on("value", snapshot => {
-  if (!snapshot.exists()) {
-    typingIndicator.textContent = "";
-    return;
-  }
-
-  const data = snapshot.val();
-
-  if (data.typing && data.user !== user) {
-    typingIndicator.textContent = `${data.user} is typing…`;
-  } else {
-    typingIndicator.textContent = "";
   }
 });

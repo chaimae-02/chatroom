@@ -251,3 +251,8 @@ button:active {
   font-size: 14px;
   padding: 7px 15px;
 }
+.typing-indicator {
+  font-style: italic;
+  color: #888;
+  padding: 4px 0;
+}
